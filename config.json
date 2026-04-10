@@ -1,0 +1,21 @@
+{
+  "channel": "log",
+  "slack_webhook_url": "https://hooks.slack.com/services/YOUR/WEBHOOK/URL",
+  "email": {
+    "smtp_host": "smtp.gmail.com",
+    "smtp_port": 587,
+    "from_addr": "you@gmail.com",
+    "to_addrs": [
+      "team@yourcompany.com"
+    ],
+    "password_env": "EMAIL_PASSWORD"
+  },
+  "dedup_window_minutes": 60,
+  "min_severity": "warning",
+  "thresholds": {
+    "price_spike_pct": 30,
+    "price_drop_pct": -30,
+    "market_floor_drop_pct": -20,
+    "presence_warning_pct": 80
+  }
+}
