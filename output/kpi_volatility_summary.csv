@@ -1,0 +1,17 @@
+portal,insurer,mean_price,avg_std,avg_cv
+Falabella,Bci,40882.99,1026.89,2.59
+Falabella,Cardif,26076.12,678.8,2.72
+Falabella,Consorcio,31620.35,888.77,3.0
+Falabella,Fid,30299.68,2166.31,7.39
+Falabella,Hdi,32088.39,926.49,2.97
+Falabella,Sura,30519.73,2634.74,8.73
+Falabella,Zenit,40603.79,1478.97,3.87
+Falabella,Zurich,28108.26,930.95,3.5
+Santander,Consorcio,46617.2,419.3,0.91
+Santander,Fid,44901.66,2036.28,4.24
+Santander,Hdi,38225.43,26.59,0.07
+Santander,Mapfre,37908.14,1.2,0.0
+Santander,REALE,37282.65,1.15,0.0
+Santander,Sura,25497.33,213.56,0.86
+Santander,Zenit,30538.96,115.01,0.42
+Santander,Zurich,33050.26,59.96,0.18

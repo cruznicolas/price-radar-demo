@@ -7,18 +7,46 @@ RAW = 'data/quotes_collapsed.csv'
 OUT = 'output'
 os.makedirs(OUT, exist_ok=True)
 
+# Canonical insurer names — resolves case inconsistencies across portals.
+# Add an entry whenever a scraper returns the same brand under different
+# capitalisations on different portals.
+INSURER_CANONICAL = {
+    'zurich': 'Zurich',   # Falabella → 'Zurich', Santander → 'ZURICH'
+}
+
 # ── 0. Load & normalize raw ──────────────────────────────────────────────────
 df = pd.read_csv(RAW)
-df['scraped_at'] = pd.to_datetime(df['updated_at'])
-df['insurer']   = df['name'].str.strip()
+# Source timestamps are recorded in CET. Convert them to America/Santiago for
+# all downstream analytics, then drop timezone info so the existing CSV outputs
+# and dashboard continue to work with local Santiago wall-clock time.
+df['scraped_at'] = (
+    pd.to_datetime(df['updated_at'])
+    .dt.tz_localize('CET')
+    .dt.tz_convert('America/Santiago')
+    .dt.tz_localize(None)
+)
+df['insurer']   = df['name'].str.strip().apply(
+    lambda x: INSURER_CANONICAL.get(x.lower(), x)
+)
 df['portal']    = df['Portal'].str.strip()
 df['plan_type'] = df['plan_type'].str.strip()
 df['price']     = df['effective_price']
 df = df.dropna(subset=['price'])
 df = df.sort_values(['portal', 'insurer', 'scraped_at']).reset_index(drop=True)
 
-# Assign a run_id per (portal, scraped_at) pair
-run_keys = df[['portal','scraped_at']].drop_duplicates().copy()
+# Assign a run_id per (portal, scraped_at) pair.
+# Sort by (portal, scraped_at) before assigning so that run_id is
+# monotonically increasing with time within each portal. Without this
+# explicit sort, drop_duplicates preserves the df's row order (sorted by
+# portal/insurer/scraped_at), meaning a (portal, t) pair that only contains
+# an insurer that sorts late alphabetically can appear last and receive the
+# highest run_id — making max(run_id) != most-recent timestamp.
+run_keys = (
+    df[['portal','scraped_at']]
+    .drop_duplicates()
+    .sort_values(['portal','scraped_at'])
+    .copy()
+)
 run_keys['run_id'] = range(1, len(run_keys)+1)
 df = df.merge(run_keys, on=['portal','scraped_at'], how='left')
 
@@ -227,6 +255,13 @@ presence.to_csv(f'{OUT}/kpi_presence_rate.csv', index=False)
 print(f"kpi_presence_rate: {len(presence)} rows")
 
 # ── 8. kpi_market_floor (batch layer) ────────────────────────────────────────
+# NOTE: this table averages min/max prices across all runs within each calendar
+# day before computing the floor delta.  An intra-day price drop that fully
+# reverts before midnight will be smoothed out and may not reach the ±20 %
+# threshold here even though it triggers an event in market_floor_events.csv
+# (step 8b), which operates at per-snapshot granularity.
+# Use kpi_market_floor for day-over-day trend analysis; use market_floor_events
+# for precise event detection.
 mf_daily = (
     sr_daily.groupby(['date','portal'])
     .agg(
@@ -246,9 +281,7 @@ mf_daily.to_csv(f'{OUT}/kpi_market_floor.csv', index=False)
 print(f"kpi_market_floor: {len(mf_daily)} rows")
 print(f"  market events flagged: {mf_daily['is_market_event'].sum()}")
 
-print("\n✓ All tables written to", OUT)
-
-# ── 8b. Fix: market_floor_events using per-snapshot, not daily ───────────────
+# ── 8b. market_floor_events using per-snapshot, not daily ────────────────────
 snap_floor = (
     snapshot_rankings.groupby(['portal','scraped_at','run_id'])['min_price']
     .min().reset_index()
@@ -260,5 +293,69 @@ snap_floor['is_event'] = snap_floor['floor_pct_chg'].abs() >= 20
 
 floor_events = snap_floor[snap_floor['is_event']].copy()
 floor_events.to_csv(f'{OUT}/market_floor_events.csv', index=False)
-print(f"\nmarket_floor_events (snapshot-level, ≥20% move): {len(floor_events)} rows")
+print(f"\nmarket_floor_events (snapshot-level, >=20% move): {len(floor_events)} rows")
 print(floor_events[['portal','scraped_at','prev_floor','min_price','floor_pct_chg']].to_string())
+
+# ── 9. kpi_volatility_summary (batch layer) ───────────────────────────────────
+# Per-insurer aggregation of kpi_price_stats across all days.
+# Consumed by the dashboard Volatility tab (VOL constant).
+vol_summary = (
+    price_stats.groupby(['portal','insurer'])
+    .agg(
+        mean_price=('mean',   'mean'),
+        avg_std=   ('std',    'mean'),
+        avg_cv=    ('cv',     'mean'),
+    )
+    .reset_index()
+)
+vol_summary['mean_price'] = vol_summary['mean_price'].round(2)
+vol_summary['avg_std']    = vol_summary['avg_std'].round(2)
+vol_summary['avg_cv']     = vol_summary['avg_cv'].round(2)
+vol_summary.to_csv(f'{OUT}/kpi_volatility_summary.csv', index=False)
+print(f"kpi_volatility_summary: {len(vol_summary)} rows")
+
+# ── 10. kpi_presence_summary (batch layer) ────────────────────────────────────
+# Per-insurer summary of presence_pct across all days.
+# Consumed by the dashboard Volatility tab (PRES constant).
+pres_summary = (
+    presence.groupby(['portal','insurer'])
+    .agg(
+        avg_presence=('presence_pct', 'mean'),
+        min_presence=('presence_pct', 'min'),
+    )
+    .reset_index()
+)
+pres_summary['avg_presence'] = pres_summary['avg_presence'].round(2)
+pres_summary['min_presence'] = pres_summary['min_presence'].round(2)
+pres_summary.to_csv(f'{OUT}/kpi_presence_summary.csv', index=False)
+print(f"kpi_presence_summary: {len(pres_summary)} rows")
+
+# ── 11. kpi_hourly_changes (stream layer) ─────────────────────────────────────
+# Count of price-change events by (portal, insurer, hour-of-day).
+# Consumed by the dashboard Repricing Timing tab (HM constant).
+hourly = price_changes.copy()
+hourly['hour'] = pd.to_datetime(hourly['scraped_at']).dt.hour
+hourly['dow'] = pd.to_datetime(hourly['scraped_at']).dt.dayofweek
+kpi_hourly = (
+    hourly.groupby(['portal','insurer','dow','hour'])
+    .size()
+    .reset_index(name='changes')
+)
+kpi_hourly.to_csv(f'{OUT}/kpi_hourly_changes.csv', index=False)
+print(f"kpi_hourly_changes: {len(kpi_hourly)} rows")
+
+# ── 12. kpi_dow_changes (stream layer) ────────────────────────────────────────
+# Count of price-change events by (insurer, day-of-week).
+# day-of-week follows Python convention: 0=Monday … 6=Sunday.
+# Consumed by the dashboard Repricing Timing tab (DOW constant).
+dow_ch = price_changes.copy()
+dow_ch['dow'] = pd.to_datetime(dow_ch['scraped_at']).dt.dayofweek
+kpi_dow = (
+    dow_ch.groupby(['portal','insurer','dow'])
+    .size()
+    .reset_index(name='changes')
+)
+kpi_dow.to_csv(f'{OUT}/kpi_dow_changes.csv', index=False)
+print(f"kpi_dow_changes: {len(kpi_dow)} rows")
+
+print("\nAll tables written to", OUT)

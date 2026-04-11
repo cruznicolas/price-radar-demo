@@ -17,5 +17,19 @@
     "price_drop_pct": -30,
     "market_floor_drop_pct": -20,
     "presence_warning_pct": 80
+  },
+  "monitored_profile": {
+    "birthdate": "1979-11-12",
+    "gender": "male",
+    "brand": "CHEVROLET",
+    "model": "CAPTIVA",
+    "year": 2025
+  },
+  "llm": {
+    "enabled": false,
+    "model": "claude-haiku-4-5-20251001",
+    "api_key_env": "ANTHROPIC_API_KEY",
+    "timeout_seconds": 8,
+    "stub_mode": false
   }
 }

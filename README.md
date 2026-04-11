@@ -2,6 +2,10 @@
 
 A self-contained price-intelligence system that ingests scraped insurance quotes, computes analytics tables in two processing layers (stream and batch), fires configurable alerts, and presents everything in a single-file dashboard. No database or server required for local use.
 
+Friendly guide to the generated tables: [`DATA_TABLE_GUIDE.md`](DATA_TABLE_GUIDE.md)  
+HTML docs viewer for the repo markdown files: `python build_docs.py` then open [`docs.html`](docs.html)  
+LLM insight layer architecture: [`LLM_LAYER.md`](LLM_LAYER.md)
+
 ---
 
 ## Table of contents
@@ -95,6 +99,25 @@ python notifications.py --channel slack   # POST to Slack webhook
 python notifications.py --channel email   # send via SMTP/Gmail
 python notifications.py --test            # fire a synthetic test alert
 ```
+
+### Generate LLM insights (optional)
+
+The LLM layer requires `anthropic` and a valid `ANTHROPIC_API_KEY`. Set `llm.enabled: true` in `config.json` first.
+
+```bash
+# Generate today's daily market briefing (appears in the dashboard)
+python llm_briefing.py
+
+# Backfill LLM context paragraphs for all critical alerts (appended to Slack)
+python llm_enrichment.py
+
+# Test the full pipeline without API credits (writes canned placeholder text)
+python llm_briefing.py --stub
+python llm_enrichment.py --stub
+python build_dashboard.py                 # embeds stub content — zero API calls
+```
+
+See [`LLM_LAYER.md`](LLM_LAYER.md) for the full architecture contract (separation rules, failure semantics, scheduling).
 
 ---
 

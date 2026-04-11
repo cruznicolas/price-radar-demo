@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c ':*)",
+      "Bash(wc -l /c/Users/nicol/Desktop/price_radar_demo/output/*.csv)",
+      "Bash(python3:*)",
+      "Bash(grep:*)",
+      "Bash(awk -F',' 'NR>1 {print $1}' \"C:/Users/nicol/Desktop/price_radar_demo/data/quotes_collapsed.csv\")",
+      "Bash(awk -F',' 'NR>1 {print $3}' \"C:/Users/nicol/Desktop/price_radar_demo/data/quotes_collapsed.csv\")",
+      "Bash(python build_dashboard.py)",
+      "Bash(python llm_briefing.py --stub)",
+      "Bash(python llm_enrichment.py --stub)",
+      "Bash(python notifications.py --test)",
+      "Bash(python -c ':*)"
+    ]
+  }
+}

@@ -22,6 +22,7 @@ from pathlib import Path
 CONFIG_PATH = Path(__file__).parent / 'config.json'
 ALERTS_PATH = Path(__file__).parent / 'output/alert_events.csv'
 STATE_PATH  = Path(__file__).parent / 'output/notification_state.json'
+CACHE_DIR   = Path(__file__).parent / 'output' / 'llm_cache'
 
 DEFAULT_CONFIG = {
     "channel": "log",           # "log" | "slack" | "email"
@@ -40,8 +41,27 @@ DEFAULT_CONFIG = {
         "price_drop_pct": -30,
         "market_floor_drop_pct": -20,
         "presence_warning_pct": 80
+    },
+    "llm": {
+        "enabled": False,
+        "model": "claude-haiku-4-5-20251001",
+        "api_key_env": "ANTHROPIC_API_KEY",
+        "timeout_seconds": 8,
+        "stub_mode": False
     }
 }
+
+
+# ── LLM cache reader (no API calls — cache-only) ──────────────────────────────
+def load_alert_context(alert_id) -> str:
+    """Read a pre-generated LLM context paragraph from the cache, or return ''."""
+    try:
+        p = CACHE_DIR / f'alert_{alert_id}.txt'
+        if p.exists():
+            return p.read_text(encoding='utf-8').strip()
+    except Exception:
+        pass
+    return ''
 
 def load_config():
     if CONFIG_PATH.exists():
@@ -90,26 +110,34 @@ SEVERITY_LABEL = {'critical': 'CRITICAL', 'warning': 'WARNING', 'info': 'INFO'}
 def format_alert_text(alert):
     emoji  = SEVERITY_EMOJI.get(alert['severity'], '⚪')
     label  = SEVERITY_LABEL.get(alert['severity'], alert['severity'].upper())
-    return (
-        f"{emoji} [{label}] {alert['alert_type'].upper().replace('_',' ')}\n"
-        f"   {alert['detail']}\n"
-        f"   Portal: {alert['portal']} | Insurer: {alert['insurer']}\n"
-        f"   Fired at: {alert['fired_at']} | Δ {alert['value']:+.1f}%"
-    )
+    lines = [
+        f"{emoji} [{label}] {alert['alert_type'].upper().replace('_',' ')}",
+        f"   {alert['detail']}",
+        f"   Portal: {alert['portal']} | Insurer: {alert['insurer']}",
+        f"   Fired at: {alert['fired_at']} | Δ {alert['value']:+.1f}%",
+    ]
+    ctx = alert.get('_llm_context', '')
+    if ctx:
+        lines.append(f"   Context: {ctx}")
+    return '\n'.join(lines)
 
 def format_slack_payload(alert):
     color = {'critical': '#E24B4A', 'warning': '#EF9F27', 'info': '#378ADD'}.get(alert['severity'], '#888')
+    fields = [
+        {"title": "Portal",   "value": alert['portal'],  "short": True},
+        {"title": "Insurer",  "value": alert['insurer'], "short": True},
+        {"title": "Change",   "value": f"{alert['value']:+.1f}%", "short": True},
+        {"title": "Fired at", "value": alert['fired_at'],          "short": True},
+    ]
+    ctx = alert.get('_llm_context', '')
+    if ctx:
+        fields.append({"title": "Context", "value": ctx, "short": False})
     return {
         "attachments": [{
             "color": color,
             "title": f"{SEVERITY_EMOJI[alert['severity']]} {alert['alert_type'].replace('_',' ').title()}",
             "text": alert['detail'],
-            "fields": [
-                {"title": "Portal",   "value": alert['portal'],  "short": True},
-                {"title": "Insurer",  "value": alert['insurer'], "short": True},
-                {"title": "Change",   "value": f"{alert['value']:+.1f}%",       "short": True},
-                {"title": "Fired at", "value": alert['fired_at'],               "short": True},
-            ],
+            "fields": fields,
             "footer": "Price Monitor",
             "ts": int(datetime.now().timestamp())
         }]
@@ -157,6 +185,11 @@ def send_email(alert, cfg):
         return False
 
 def dispatch(alert, cfg):
+    # Attach pre-generated LLM context from cache (zero API calls; no-op if missing)
+    ctx = load_alert_context(alert.get('alert_id', ''))
+    if ctx:
+        alert['_llm_context'] = ctx
+
     channel = cfg['channel']
     if channel == 'slack' and cfg.get('slack_webhook_url'):
         ok = send_slack(alert, cfg['slack_webhook_url'])
