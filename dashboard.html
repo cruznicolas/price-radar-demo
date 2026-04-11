@@ -3,166 +3,331 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PriceRadar — Chilean Auto Insurance</title>
+<title>Price Radar — Chilean Auto Insurance</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#f4f3ef;--surface:#ffffff;--surface2:#f8f7f4;
-  --border:#e5e4de;--text:#1a1a18;--muted:#73726c;--hint:#b4b2a9;
-  --blue:#185FA5;--blue-bg:#E6F1FB;
-  --red:#A32D2D;--red-bg:#FCEBEB;
-  --amber:#854F0B;--amber-bg:#FAEEDA;
-  --green:#3B6D11;--green-bg:#EAF3DE;
-  --shadow:0 10px 30px rgba(26,26,24,.05);
-  --chip:#efeee8;
+  --bg:#f4f6fb;--surface:#ffffff;--surface2:#f8f9fd;--surface3:#eef2ff;
+  --border:#e2e8f0;--text:#111827;--muted:#5f6b7a;--hint:#8b97a8;
+  --primary:#2563eb;--primary-strong:#1d4ed8;--primary-soft:#e8f0fe;
+  --red:#c62828;--red-bg:#fdecec;
+  --amber:#b26a00;--amber-bg:#fff4df;
+  --green:#2e7d32;--green-bg:#ebf7ee;
+  --shadow:0 10px 28px rgba(15,23,42,.08);
+  --shadow-soft:0 2px 8px rgba(15,23,42,.06);
+  --chip:#eef2ff;
+  --radius:16px;
+  --radius-sm:10px;
 }
 body[data-theme='dark']{
-  --bg:#111418;--surface:#181d23;--surface2:#212833;
-  --border:#2d3744;--text:#e7edf5;--muted:#a1adba;--hint:#718091;
-  --blue:#72B7FF;--blue-bg:#12263a;
-  --red:#ff8c8c;--red-bg:#3a1d22;
-  --amber:#ffc46b;--amber-bg:#3c2e14;
-  --green:#98d37a;--green-bg:#1d3421;
-  --shadow:0 18px 40px rgba(0,0,0,.28);
-  --chip:#25303b;
+  --bg:#12161f;--surface:#171c26;--surface2:#1c2330;--surface3:#222b39;
+  --border:#2d3748;--text:#edf2f7;--muted:#a8b3c2;--hint:#7f8a98;
+  --primary:#90caf9;--primary-strong:#64b5f6;--primary-soft:#16253e;
+  --red:#ff9c94;--red-bg:#392228;
+  --amber:#ffd08a;--amber-bg:#3a2e19;
+  --green:#a7d8b0;--green-bg:#1a3126;
+  --shadow:0 14px 28px rgba(0,0,0,.18);
+  --shadow-soft:0 2px 8px rgba(0,0,0,.16);
+  --chip:#1a2538;
 }
-body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;font-size:13px;line-height:1.5}
-nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;gap:0;height:50px;position:sticky;top:0;z-index:100}
-.logo{font-size:14px;font-weight:700;letter-spacing:-.3px;margin-right:28px;color:var(--text)}
-.logo em{color:var(--blue);font-style:normal}
-.nav-tab{padding:0 13px;height:50px;display:flex;align-items:center;cursor:pointer;border-bottom:2px solid transparent;font-size:12px;color:var(--muted);gap:5px;white-space:nowrap;transition:color .15s}
-.nav-tab:hover{color:var(--text)}
-.nav-tab.active{border-bottom-color:var(--blue);color:var(--blue);font-weight:500}
+body{
+  background:
+    radial-gradient(circle at top, rgba(37,99,235,.06), transparent 32%),
+    linear-gradient(180deg,#f8faff 0%, var(--bg) 28%);
+  color:var(--text);
+  font-family:'Roboto',Arial,sans-serif;
+  font-size:14px;
+  line-height:1.55;
+}
+body[data-theme='dark']{
+  background:var(--bg);
+}
+nav{
+  background:rgba(255,255,255,.92);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:0 24px;
+  display:flex;
+  align-items:center;
+  gap:0;
+  height:64px;
+  position:sticky;
+  top:0;
+  z-index:100;
+}
+body[data-theme='dark'] nav{background:rgba(23,28,38,.94)}
+.logo{
+  font-size:20px;
+  font-weight:700;
+  letter-spacing:-.02em;
+  margin-right:28px;
+  color:var(--text);
+}
+.logo em{color:var(--primary);font-style:normal}
+.nav-tab{
+  padding:0 16px;
+  height:64px;
+  display:flex;
+  align-items:center;
+  cursor:pointer;
+  border-bottom:3px solid transparent;
+  font-size:14px;
+  font-weight:500;
+  color:var(--muted);
+  gap:6px;
+  white-space:nowrap;
+  transition:color .15s,border-color .15s,background .15s;
+}
+.nav-tab:hover{color:var(--text);background:rgba(37,99,235,.04)}
+.nav-tab.active{border-bottom-color:var(--primary);color:var(--primary);font-weight:700}
 .nav-spacer{flex:1}
-.lang-switch{display:flex;align-items:center;gap:8px;margin-left:auto}
-.lang-switch label{font-size:11px;color:var(--muted)}
-.theme-toggle{display:flex;align-items:center;gap:8px;margin-left:12px}
-.theme-toggle button{border:1px solid var(--border);background:var(--surface2);color:var(--text);border-radius:999px;padding:6px 10px;font-size:11px;cursor:pointer}
-.theme-toggle button:hover{border-color:var(--blue);color:var(--blue)}
-.badge{background:var(--red-bg);color:var(--red);font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px}
-main{max-width:1300px;margin:0 auto;padding:20px 24px}
+.lang-switch{display:flex;align-items:center;gap:10px;margin-left:auto}
+.lang-switch label{font-size:12px;color:var(--muted);font-weight:500}
+.theme-toggle{display:flex;align-items:center;gap:8px;margin-left:14px}
+.theme-toggle button{
+  border:1px solid var(--border);
+  background:var(--surface);
+  color:var(--text);
+  border-radius:10px;
+  padding:0 16px;
+  min-height:40px;
+  font-size:13px;
+  font-weight:500;
+  letter-spacing:.01em;
+  cursor:pointer;
+  box-shadow:var(--shadow-soft);
+  transition:background .15s,border-color .15s,color .15s,box-shadow .15s;
+}
+.theme-toggle button:hover{border-color:var(--primary);background:var(--primary-soft);color:var(--primary)}
+.theme-toggle button:focus-visible{outline:none;box-shadow:0 0 0 4px rgba(37,99,235,.14)}
+.badge{
+  background:var(--red-bg);
+  color:var(--red);
+  font-size:10px;
+  font-weight:700;
+  padding:2px 7px;
+  border-radius:999px;
+}
+main{max-width:1360px;margin:0 auto;padding:28px 24px 36px}
 .page{display:none}.page.active{display:block}
-.sec{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--hint);margin:20px 0 10px}
+.sec{
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:var(--hint);
+  margin:24px 0 12px;
+}
 .sec:first-child{margin-top:0}
-.g{display:grid;gap:10px}
+.g{display:grid;gap:16px}
 .g2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .g3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .g4{grid-template-columns:repeat(4,minmax(0,1fr))}
 .g5{grid-template-columns:repeat(5,minmax(0,1fr))}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;box-shadow:var(--shadow)}
-.kpi{background:linear-gradient(180deg,var(--surface2),var(--surface));border:1px solid var(--border);border-radius:12px;padding:14px}
-.kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--hint);margin-bottom:4px}
-.kpi-value{font-size:20px;font-weight:700;color:var(--text);letter-spacing:-.5px}
-.kpi-sub{font-size:10px;color:var(--muted);margin-top:4px;line-height:1.45}
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:20px;
+  box-shadow:var(--shadow-soft);
+}
+.kpi{
+  background:linear-gradient(180deg,var(--surface),var(--surface2));
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:18px;
+  box-shadow:var(--shadow-soft);
+}
+.kpi-label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--hint);margin-bottom:8px;font-weight:700}
+.kpi-value{font-size:32px;font-weight:700;color:var(--text);letter-spacing:-.04em;line-height:1}
+.kpi-sub{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5}
 .cw{position:relative;width:100%}
-.h200{height:200px}.h260{height:260px}.h300{height:300px}.h340{height:340px}
-.frow{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
-.flabel{font-size:11px;color:var(--muted)}
-select{border:1px solid var(--border);background:var(--surface);border-radius:6px;padding:3px 8px;font-size:11px;color:var(--text);cursor:pointer;outline:none}
-select:hover{border-color:var(--blue)}
-.wrow{display:flex;align-items:center;gap:8px;margin-bottom:5px}
-.wname{font-size:11px;width:68px;text-align:right;color:var(--muted);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.wtrack{flex:1;height:10px;background:var(--surface2);border-radius:5px;overflow:hidden}
-.wfill{height:100%;border-radius:5px}
-.wval{font-size:11px;font-weight:600;width:38px;color:var(--text)}
-.aitem{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+.h200{height:240px}.h260{height:280px}.h300{height:320px}.h340{height:360px}
+.frow{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.flabel{font-size:12px;color:var(--muted);font-weight:500}
+select{
+  border:1px solid var(--border);
+  background:var(--surface);
+  border-radius:10px;
+  padding:10px 36px 10px 12px;
+  font-size:13px;
+  color:var(--text);
+  cursor:pointer;
+  outline:none;
+  min-height:40px;
+  box-shadow:none;
+}
+select:hover,select:focus{border-color:var(--primary);background:var(--surface)}
+.wrow{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.wname{font-size:12px;width:82px;text-align:right;color:var(--muted);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.wtrack{flex:1;height:10px;background:var(--surface3);border-radius:999px;overflow:hidden}
+.wfill{height:100%;border-radius:999px}
+.wval{font-size:12px;font-weight:700;width:44px;color:var(--text)}
+.aitem{
+  display:flex;
+  gap:12px;
+  padding:14px 0;
+  border-bottom:1px solid var(--border);
+}
 .aitem:last-child{border-bottom:none}
-.adot{width:7px;height:7px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.adot{width:10px;height:10px;border-radius:50%;margin-top:6px;flex-shrink:0}
 .s-critical{background:var(--red)}
-.s-warning{background:#EF9F27}
-.s-info{background:var(--blue)}
-.atype{font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--hint)}
-.adetail{font-size:12px;color:var(--text);line-height:1.4;margin-top:1px;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
-.ameta{font-size:10px;color:var(--muted);margin-top:2px}
-.ainsight{margin-top:8px;padding:9px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface2)}
-.ainsight-label{font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--blue);margin-bottom:4px}
-.ainsight-body{font-size:11px;color:var(--muted);line-height:1.55}
-.alert-actor{font-weight:600;color:var(--text)}
+.s-warning{background:#f59e0b}
+.s-info{background:var(--primary)}
+.atype{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--hint)}
+.adetail{font-size:14px;color:var(--text);line-height:1.5;margin-top:4px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.ameta{font-size:12px;color:var(--muted);margin-top:8px}
+.ainsight{
+  margin-top:12px;
+  padding:14px 14px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:var(--surface2);
+}
+.ainsight-label{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--primary);margin-bottom:6px}
+.ainsight-body{font-size:13px;color:var(--muted);line-height:1.65}
+.alert-actor{font-weight:700;color:var(--text)}
 .alert-sep{color:var(--hint)}
-.alert-move{display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;line-height:1.2}
+.alert-move{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700;line-height:1.2}
 .alert-up{background:var(--green-bg);color:var(--green)}
 .alert-down{background:var(--red-bg);color:var(--red)}
 .alert-arrow{font-size:12px;line-height:1}
 .alert-range{color:var(--muted);font-variant-numeric:tabular-nums}
-.tag{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;letter-spacing:.03em;text-transform:uppercase}
+.tag{display:inline-block;font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px;letter-spacing:.03em;text-transform:uppercase}
 .tc{background:var(--red-bg);color:var(--red)}
 .tw{background:var(--amber-bg);color:var(--amber)}
-.ti{background:var(--blue-bg);color:var(--blue)}
+.ti{background:var(--primary-soft);color:var(--primary)}
 .tg{background:var(--green-bg);color:var(--green)}
-.dt{width:100%;border-collapse:collapse;font-size:11px}
-.dt th{text-align:left;padding:5px 10px;font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--hint);border-bottom:1px solid var(--border);white-space:nowrap}
-.dt td{padding:6px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+.dt{width:100%;border-collapse:collapse;font-size:12px}
+.dt th{text-align:left;padding:10px 12px;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--hint);border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surface2)}
+.dt td{padding:12px;border-bottom:1px solid var(--border);vertical-align:middle}
 .dt tr:last-child td{border-bottom:none}
 .dt tr:hover td{background:var(--surface2)}
 .num{font-variant-numeric:tabular-nums}
-.up{color:var(--red);font-weight:600}
-.dn{color:var(--green);font-weight:600}
-.hmwrap{overflow-x:auto;padding-bottom:4px}
-.hmt{border-collapse:collapse;font-size:9px}
-.hmt th{padding:2px 3px;color:var(--hint);font-weight:500;text-align:center}
-.hmt td{width:20px;height:20px;text-align:center;border-radius:3px;font-size:8px;font-weight:600}
-.hrlabel{text-align:right!important;padding-right:8px!important;color:var(--muted);font-size:10px;width:72px;font-weight:400}
-.vrow{display:flex;align-items:center;gap:8px;margin-bottom:5px}
-.vname{font-size:11px;width:84px;text-align:right;color:var(--muted);flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;line-height:1.35}
-.vtrack{flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden}
-.vfill{height:100%;border-radius:4px}
-.vval{font-size:11px;font-weight:600;width:44px;color:var(--text)}
-.note{font-size:10px;color:var(--hint);margin-top:8px;line-height:1.5;border-left:2px solid var(--border);padding-left:8px}
-.toggle-group{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:2px;gap:2px}
-.toggle-btn{font-size:11px;font-weight:600;padding:3px 11px;border-radius:5px;border:none;background:transparent;color:var(--muted);cursor:pointer;transition:background .12s,color .12s;white-space:nowrap}
+.up{color:var(--red);font-weight:700}
+.dn{color:var(--green);font-weight:700}
+.hmwrap{overflow-x:auto;padding-bottom:6px}
+.hmt{border-collapse:separate;border-spacing:4px;font-size:11px}
+.hmt th{padding:4px 5px;color:var(--hint);font-weight:500;text-align:center}
+.hmt td{width:24px;height:24px;text-align:center;border-radius:8px;font-size:9px;font-weight:700}
+.hrlabel{text-align:right!important;padding-right:10px!important;color:var(--muted);font-size:11px;width:84px;font-weight:500}
+.vrow{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.vname{font-size:12px;width:92px;text-align:right;color:var(--muted);flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;line-height:1.4}
+.vtrack{flex:1;height:10px;background:var(--surface3);border-radius:999px;overflow:hidden}
+.vfill{height:100%;border-radius:999px}
+.vval{font-size:12px;font-weight:700;width:52px;color:var(--text)}
+.note{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:12px;
+  line-height:1.65;
+  border-left:3px solid var(--primary-soft);
+  padding-left:12px;
+}
+.toggle-group{
+  display:flex;
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:999px;
+  padding:3px;
+  gap:4px;
+}
+.toggle-btn{
+  font-size:12px;
+  font-weight:500;
+  padding:6px 14px;
+  border-radius:999px;
+  border:none;
+  background:transparent;
+  color:var(--muted);
+  cursor:pointer;
+  transition:background .12s,color .12s,box-shadow .12s;
+  white-space:nowrap;
+}
 .toggle-btn:hover{color:var(--text)}
-.toggle-btn.active{background:var(--surface);color:var(--blue);box-shadow:0 1px 3px rgba(0,0,0,.08)}
-.mini-grid{display:grid;gap:10px;grid-template-columns:repeat(4,minmax(0,1fr))}
-.mini-kpi{background:linear-gradient(180deg,var(--surface2),var(--surface));border:1px solid var(--border);border-radius:12px;padding:14px}
-.mini-kpi .label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--hint);margin-bottom:4px}
-.mini-kpi .value{font-size:18px;font-weight:700;letter-spacing:-.03em}
-.mini-kpi .value.long{font-size:15px;line-height:1.35}
-.mini-kpi .value .alert-move{font-size:.75em;vertical-align:middle}
-.mini-kpi .value .alert-range{font-size:.8em}
-.mini-kpi .sub{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.45}
+.toggle-btn.active{
+  background:var(--surface);
+  color:var(--primary);
+  box-shadow:var(--shadow-soft);
+}
+.mini-grid{display:grid;gap:16px;grid-template-columns:repeat(4,minmax(0,1fr))}
+.mini-kpi{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:18px;
+  box-shadow:var(--shadow-soft);
+}
+.mini-kpi .label{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--hint);margin-bottom:8px;font-weight:700}
+.mini-kpi .value{font-size:20px;font-weight:700;letter-spacing:-.03em;line-height:1.25}
+.mini-kpi .value.long{font-size:16px;line-height:1.45}
+.mini-kpi .value .alert-move{font-size:.8em;vertical-align:middle}
+.mini-kpi .value .alert-range{font-size:.82em}
+.mini-kpi .sub{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.55}
 .mini-kpi .sub strong{color:var(--text)}
 .chip-wrap{display:flex;flex-wrap:wrap;gap:8px}
-.chip{padding:6px 10px;border-radius:999px;background:var(--chip);color:var(--text);font-size:11px;border:1px solid transparent}
+.chip{padding:7px 12px;border-radius:999px;background:var(--chip);color:var(--text);font-size:12px;border:1px solid transparent}
 .overview-alerts{display:flex;flex-direction:column;gap:0}
-.overview-alerts .aitem{padding:10px 0}
-.expand{margin-top:10px;border-top:1px solid var(--border);padding-top:10px}
-.expand summary{cursor:pointer;color:var(--muted);font-size:11px;font-weight:600;list-style:none}
+.overview-alerts .aitem{padding:14px 0}
+.expand{margin-top:12px;border-top:1px solid var(--border);padding-top:12px}
+.expand summary{cursor:pointer;color:var(--muted);font-size:12px;font-weight:500;list-style:none}
 .expand summary::-webkit-details-marker{display:none}
-.expand summary:hover{color:var(--text)}
-@media (max-width:980px){.mini-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.g5{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:680px){.mini-grid,.g5,.g2{grid-template-columns:1fr}}
-/* ── Profile card ── */
-.profile-card{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:12px 16px;margin-bottom:12px}
-.profile-head{display:flex;flex-direction:column;gap:6px}
-.profile-label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--hint)}
-.profile-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
-.profile-chip{display:inline-block;padding:4px 10px;border-radius:999px;background:var(--chip);color:var(--text);font-size:12px;font-weight:500;border:1px solid var(--border)}
-.profile-chip.vehicle{font-weight:600;color:var(--blue)}
+.expand summary:hover{color:var(--primary)}
+@media (max-width:1080px){.mini-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.g5{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:720px){nav{height:auto;flex-wrap:wrap;padding:10px 16px}.nav-tab{height:48px;padding:0 12px}main{padding:20px 16px 28px}.mini-grid,.g5,.g2{grid-template-columns:1fr}.logo{width:100%;margin-right:0;margin-bottom:6px}.lang-switch{margin-left:0}}
+/* Profile card */
+.profile-card{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:14px;padding:18px 20px;margin-bottom:14px}
+.profile-head{display:flex;flex-direction:column;gap:8px}
+.profile-label{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--hint);font-weight:700}
+.profile-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
+.profile-chip{display:inline-block;padding:7px 12px;border-radius:999px;background:var(--surface3);color:var(--text);font-size:12px;font-weight:500;border:1px solid transparent}
+.profile-chip.vehicle{font-weight:700;color:var(--primary)}
 .profile-ctas{display:flex;gap:8px;flex-wrap:wrap}
-.cta-btn{border:1px solid var(--border);background:var(--surface2);color:var(--text);border-radius:999px;padding:6px 14px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;transition:border-color .15s,color .15s}
-.cta-btn:hover{border-color:var(--blue);color:var(--blue)}
-/* ── Global ranking mini-kpi ── */
-.rank-row{font-size:13px;line-height:1.5;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
-.rank-pos{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--blue);color:#fff;font-size:9px;font-weight:700;flex-shrink:0}
+.cta-btn{
+  border:1px solid var(--border);
+  background:transparent;
+  color:var(--primary);
+  border-radius:10px;
+  padding:0 16px;
+  min-height:40px;
+  font-size:13px;
+  font-weight:500;
+  letter-spacing:.01em;
+  cursor:pointer;
+  white-space:nowrap;
+  transition:border-color .15s,color .15s,background .15s,box-shadow .15s;
+}
+.cta-btn:hover{border-color:var(--primary);background:var(--primary-soft);color:var(--primary-strong);box-shadow:none}
+.cta-btn:focus-visible{outline:none;box-shadow:0 0 0 4px rgba(37,99,235,.14)}
+/* Global ranking mini-kpi */
+.rank-row{font-size:14px;line-height:1.55;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.rank-pos{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--primary);color:#fff;font-size:10px;font-weight:700;flex-shrink:0}
 .rank-second .rank-pos{background:var(--hint)}
-.rank-second{font-size:12px;color:var(--muted);margin-top:2px}
-.rank-portal{color:var(--hint);font-size:11px}
-/* ── Briefing card ── */
-.briefing-body p{font-size:12px;color:var(--text);line-height:1.7;margin-bottom:8px}
+.rank-second{font-size:13px;color:var(--muted);margin-top:4px}
+.rank-portal{color:var(--hint);font-size:12px}
+/* Briefing card */
+.briefing-body p{font-size:14px;color:var(--text);line-height:1.75;margin-bottom:10px}
 .briefing-body p:last-child{margin-bottom:0}
-.briefing-empty{font-size:11px;color:var(--hint);font-style:italic}
-.briefing-date{font-size:10px;color:var(--hint);margin-bottom:8px}
+.briefing-empty{font-size:12px;color:var(--hint);font-style:italic}
+.briefing-date{font-size:11px;color:var(--hint);margin-bottom:10px}
 .briefing-list{display:flex;flex-direction:column;gap:12px}
-.briefing-item{padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface2)}
-.briefing-item-date{font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--blue);margin-bottom:6px}
-/* ── Upgrade modal ── */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:200}
-.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px 24px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.18)}
-.modal-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px}
-.modal-body{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px}
-.modal-close{border:1px solid var(--border);background:var(--surface2);color:var(--text);border-radius:8px;padding:8px 20px;font-size:12px;font-weight:600;cursor:pointer}
-.modal-close:hover{border-color:var(--blue);color:var(--blue)}
+.briefing-item{padding:14px;border:1px solid var(--border);border-radius:14px;background:var(--surface2)}
+.briefing-item-date{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--primary);margin-bottom:8px}
+.sigma-glyph{
+  font-family:'Segoe UI Symbol','Noto Sans Symbols 2','Noto Sans Symbols','Arial Unicode MS',sans-serif;
+  font-style:normal;
+  font-weight:500;
+  text-transform:none;
+}
+/* Upgrade modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.42);display:flex;align-items:center;justify-content:center;z-index:200}
+.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:28px 24px;max-width:420px;width:90%;box-shadow:var(--shadow)}
+.modal-title{font-size:20px;font-weight:700;color:var(--text);margin-bottom:10px}
+.modal-body{font-size:14px;color:var(--muted);line-height:1.65;margin-bottom:20px}
+.modal-close{border:1px solid var(--border);background:var(--surface2);color:var(--text);border-radius:10px;padding:10px 18px;font-size:13px;font-weight:500;cursor:pointer}
+.modal-close:hover{border-color:var(--primary);color:var(--primary)}
 </style>
 </head>
 <body>
@@ -410,7 +575,7 @@ const SNR=[{"portal":"Falabella","insurer":"Consorcio","scraped_at":"2025-08-30 
 const PRES=[{"portal":"Falabella","insurer":"Cardif","avg_presence":99.33,"min_presence":95.83},{"portal":"Falabella","insurer":"Hdi","avg_presence":98.91,"min_presence":81.25},{"portal":"Falabella","insurer":"Zurich","avg_presence":98.37,"min_presence":89.58},{"portal":"Falabella","insurer":"Consorcio","avg_presence":96.64,"min_presence":52.08},{"portal":"Falabella","insurer":"Bci","avg_presence":95.22,"min_presence":77.08},{"portal":"Falabella","insurer":"Zenit","avg_presence":93.17,"min_presence":79.17},{"portal":"Falabella","insurer":"Sura","avg_presence":93.01,"min_presence":70.83},{"portal":"Falabella","insurer":"Fid","avg_presence":90.43,"min_presence":62.5},{"portal":"Santander","insurer":"Sura","avg_presence":98.42,"min_presence":75.0},{"portal":"Santander","insurer":"Mapfre","avg_presence":98.08,"min_presence":89.13},{"portal":"Santander","insurer":"Consorcio","avg_presence":97.54,"min_presence":86.36},{"portal":"Santander","insurer":"Zurich","avg_presence":97.12,"min_presence":89.13},{"portal":"Santander","insurer":"Zenit","avg_presence":94.67,"min_presence":71.74},{"portal":"Santander","insurer":"Hdi","avg_presence":93.6,"min_presence":81.25},{"portal":"Santander","insurer":"REALE","avg_presence":92.35,"min_presence":18.75},{"portal":"Santander","insurer":"Fid","avg_presence":90.31,"min_presence":67.39}];
 const GLOBAL_RANK=[{"rank":1,"insurer":"Consorcio","portal":"Falabella","price":22676.0,"scraped_at":"2025-08-30 19:30","plan_type":"Full Cobertura"},{"rank":2,"insurer":"Sura","portal":"Santander","price":23091.0,"scraped_at":"2025-08-30 19:30","plan_type":"Cobertura Completa"}];
 const MF6H={"aggregated":[{"t":"14:00","floor":22676.0,"median":28308.0,"n":13},{"t":"14:30","floor":22676.0,"median":30504.0,"n":14},{"t":"15:00","floor":22676.0,"median":29835.0,"n":12},{"t":"15:30","floor":22676.0,"median":32700.0,"n":13},{"t":"16:00","floor":22676.0,"median":30504.0,"n":14},{"t":"16:30","floor":22676.0,"median":30504.0,"n":14},{"t":"17:00","floor":22676.0,"median":28308.0,"n":13},{"t":"17:30","floor":22676.0,"median":30504.0,"n":14},{"t":"18:00","floor":22676.0,"median":32700.0,"n":13},{"t":"18:30","floor":22676.0,"median":28308.0,"n":13},{"t":"19:00","floor":22676.0,"median":26714.0,"n":7},{"t":"19:00","floor":23091.0,"median":36806.0,"n":7},{"t":"19:30","floor":22676.0,"median":26714.0,"n":7},{"t":"19:30","floor":23091.0,"median":36806.0,"n":7}],"byPortal":{"Falabella":[{"t":"14:00","floor":22676.0,"median":26714.0,"n":7},{"t":"14:30","floor":22676.0,"median":26714.0,"n":7},{"t":"15:00","floor":22676.0,"median":26694.0,"n":6},{"t":"15:30","floor":22676.0,"median":26694.0,"n":6},{"t":"16:00","floor":22676.0,"median":26714.0,"n":7},{"t":"16:30","floor":22676.0,"median":26714.0,"n":7},{"t":"17:00","floor":22676.0,"median":26714.0,"n":7},{"t":"17:30","floor":22676.0,"median":26714.0,"n":7},{"t":"18:00","floor":22676.0,"median":26694.0,"n":6},{"t":"18:30","floor":22676.0,"median":26714.0,"n":7},{"t":"19:00","floor":22676.0,"median":26714.0,"n":7},{"t":"19:30","floor":22676.0,"median":26714.0,"n":7}],"Santander":[{"t":"14:00","floor":23091.0,"median":35630.5,"n":6},{"t":"14:30","floor":23091.0,"median":36806.0,"n":7},{"t":"15:00","floor":23091.0,"median":35630.5,"n":6},{"t":"15:30","floor":23091.0,"median":36806.0,"n":7},{"t":"16:00","floor":23091.0,"median":36806.0,"n":7},{"t":"16:30","floor":23091.0,"median":36806.0,"n":7},{"t":"17:00","floor":23091.0,"median":36252.5,"n":6},{"t":"17:30","floor":23091.0,"median":36806.0,"n":7},{"t":"18:00","floor":23091.0,"median":36806.0,"n":7},{"t":"18:30","floor":23091.0,"median":35630.5,"n":6},{"t":"19:00","floor":23091.0,"median":36806.0,"n":7},{"t":"19:30","floor":23091.0,"median":36806.0,"n":7}]},"windowHours":6};
-const PROFILE={"year":2025,"birthdate":"1979-11-12","gender":"male","model":"CAPTIVA","brand":"CHEVROLET","ageYears":46};
+const PROFILE={"birthdate":"1979-11-12","model":"CAPTIVA","brand":"CHEVROLET","gender":"male","year":2025,"ageYears":46};
 const BRIEFING={"date":"2025-08-30","html":"<p>El 30 de agosto mostr\u00f3 un nuevo aumento del piso diario en Falabella y una variaci\u00f3n acotada al alza en Santander, cerrando la semana con una se\u00f1al algo m\u00e1s firme en precios m\u00ednimos. A pesar de ese repunte, no hubo cambio en el mapa competitivo: Cardif sigui\u00f3 siendo el claro referente en Falabella y Sura mantuvo una supremac\u00eda pr\u00e1cticamente total en Santander al observar la ventana de 7 d\u00edas. La volatilidad estructural contin\u00faa concentrada en Falabella, especialmente en Fid y Sura, mientras Santander se mantiene comparativamente m\u00e1s ordenado salvo por la persistente dispersi\u00f3n de Fid. En conjunto, el cierre semanal sugiere un mercado m\u00e1s estable en Santander y todav\u00eda m\u00e1s t\u00e1ctico, sensible y disputado en Falabella.</p>"};
 const BRIEFINGS=[{"date":"2025-08-30","html":"<p>El 30 de agosto mostr\u00f3 un nuevo aumento del piso diario en Falabella y una variaci\u00f3n acotada al alza en Santander, cerrando la semana con una se\u00f1al algo m\u00e1s firme en precios m\u00ednimos. A pesar de ese repunte, no hubo cambio en el mapa competitivo: Cardif sigui\u00f3 siendo el claro referente en Falabella y Sura mantuvo una supremac\u00eda pr\u00e1cticamente total en Santander al observar la ventana de 7 d\u00edas. La volatilidad estructural contin\u00faa concentrada en Falabella, especialmente en Fid y Sura, mientras Santander se mantiene comparativamente m\u00e1s ordenado salvo por la persistente dispersi\u00f3n de Fid. En conjunto, el cierre semanal sugiere un mercado m\u00e1s estable en Santander y todav\u00eda m\u00e1s t\u00e1ctico, sensible y disputado en Falabella.</p>"},{"date":"2025-08-29","html":"<p>El 29 de agosto cerr\u00f3 con pisos diarios casi planos en ambos portales, lo que refuerza una lectura de estabilizaci\u00f3n despu\u00e9s de varios movimientos en la semana. En esa base m\u00e1s estable, Cardif ampli\u00f3 con fuerza su ventaja en Falabella dentro de la m\u00e9trica de win rate de 7 d\u00edas, mientras Sura sigui\u00f3 liderando de forma total en Santander. La volatilidad diaria continu\u00f3 concentr\u00e1ndose en un grupo acotado, particularmente Fid y Sura en Falabella, sin que Santander mostrara un deterioro comparable fuera del comportamiento habitual de Fid. Para un cliente chileno del sector, la conclusi\u00f3n es clara: hoy el mercado se ve estable en nivel, pero con una competencia muy asim\u00e9trica entre portales.</p>"},{"date":"2025-08-28","html":"<p>Durante el 28 de agosto, los pisos diarios corrigieron levemente a la baja tanto en Falabella como en Santander, aunque sin configurar un evento de mercado significativo. El cuadro competitivo sigui\u00f3 siendo muy estable: Cardif fortaleci\u00f3 su liderazgo reciente en Falabella y Sura continu\u00f3 pr\u00e1cticamente sin presi\u00f3n en Santander. La mayor atenci\u00f3n sigue estando en la dispersi\u00f3n de precios, donde Fid contin\u00faa destacando como el actor m\u00e1s vol\u00e1til en ambos portales, mientras Zurich y Sura mantienen variabilidad elevada en Falabella. En s\u00edntesis, el mercado muestra una correcci\u00f3n menor en precios m\u00ednimos, pero no un cambio de r\u00e9gimen competitivo.</p>"},{"date":"2025-08-27","html":"<p>El 27 de agosto mostr\u00f3 un repunte del piso tanto en Falabella como, con mayor fuerza, en Santander, lo que apunta a una pausa en la presi\u00f3n bajista observada d\u00edas antes. Aun as\u00ed, el liderazgo competitivo sigui\u00f3 altamente concentrado: Cardif mantuvo la delantera en Falabella y Sura continu\u00f3 capturando pr\u00e1cticamente todo el win rate en Santander. En volatilidad, Falabella volvi\u00f3 a exhibir un patr\u00f3n m\u00e1s movedizo, con Fid, Sura y Consorcio entre los nombres con mayor dispersi\u00f3n intradiaria, mientras en Santander la principal anomal\u00eda volvi\u00f3 a ser Fid. La se\u00f1al para negocio es de recuperaci\u00f3n de precios m\u00ednimos en ambos portales, pero sin cambio todav\u00eda en los incumbentes que est\u00e1n marcando el piso efectivo del mercado.</p>"},{"date":"2025-08-26","html":"<p>La jornada del 26 de agosto destac\u00f3 por una ca\u00edda relevante del piso diario en Falabella, lo que sugiere una intensificaci\u00f3n competitiva en ese portal, mientras Santander continu\u00f3 operando sin un cambio material en su nivel base. Pese a ese movimiento, la estructura de liderazgo se mantuvo estable: Cardif sigui\u00f3 al frente en Falabella y Sura conserv\u00f3 un dominio total en Santander al mirar la ventana de 7 d\u00edas. La volatilidad sigue concentrada en algunos actores, especialmente Fid y Sura en Falabella, con Zurich tambi\u00e9n mostrando mayor dispersi\u00f3n de precios en esta fecha. El mercado, por tanto, se ve mixto: m\u00e1s agresivo en Falabella, pero todav\u00eda muy controlado y predecible en Santander.</p>"},{"date":"2025-08-25","html":"<p>El 25 de agosto mostr\u00f3 un rebote del piso en Falabella, despu\u00e9s de la ca\u00edda observada el d\u00eda anterior, mientras Santander permaneci\u00f3 pr\u00e1cticamente sin cambios y sigui\u00f3 entregando una se\u00f1al de continuidad. Aun con ese ajuste, el liderazgo competitivo no cambi\u00f3: Cardif sigui\u00f3 encabezando Falabella en win rate de 7 d\u00edas y Sura mantuvo una posici\u00f3n dominante en Santander. La lectura de volatilidad sigue siendo exigente en Falabella, donde Fid, Sura y Hdi exhibieron mayor variaci\u00f3n intradiaria que el resto del mercado. Para un cliente profesional, la se\u00f1al es de mercado todav\u00eda ordenado a nivel agregado, pero con mayor sensibilidad t\u00e1ctica en Falabella que en Santander.</p>"},{"date":"2025-08-24","html":"<p>En la \u00faltima semana, el mercado de seguros automotrices en Chile se mantuvo relativamente estable, aunque Falabella volvi\u00f3 a mostrar una baja en su piso diario, mientras Santander sigui\u00f3 casi plano. En t\u00e9rminos competitivos, Cardif continu\u00f3 liderando con claridad en Falabella en la ventana de 7 d\u00edas, mientras Sura sostuvo un dominio pr\u00e1cticamente total en Santander. La principal se\u00f1al de riesgo sigue viniendo por volatilidad y dispersi\u00f3n de precios: Fid y Sura se mantienen entre las aseguradoras m\u00e1s inestables, especialmente en Falabella. En conjunto, el cierre del d\u00eda sugiere un mercado sin quiebres estructurales, pero con presi\u00f3n competitiva todav\u00eda concentrada en pocos jugadores.</p>"}];
 // @@DATA_END
@@ -462,9 +627,9 @@ const LANGS={
       timingHourNote:'Cell = number of price changes in that hour across August. In Santiago time, repricing now clusters mostly between 00:00 and 06:00, with the strongest spike at 00:00. Fid and Sura remain the most distributed across the overnight window; most others are concentrated around midnight with smaller follow-on moves.',
       timingDowTitle:'Price changes by insurer x day of week',
       timingDowNote:'Shows whether any insurer has a weekly pricing cycle. Relatively even distribution suggests daily rules, not weekly ones.',
-      volStdTitle:'Avg daily std deviation σ (CLP)',
-      volStdNote:'High sigma = prices swing widely day-to-day. Signals dynamic / algorithmic repricing.',
-      volCvTitle:'Coefficient of variation — σ/μ (%)',
+      volStdTitle:'Avg daily {sigma} deviation (CLP)',
+      volStdNote:'High {sigma} means prices swing widely day-to-day. Signals dynamic / algorithmic repricing.',
+      volCvTitle:'Coefficient of variation — {sigma}/μ (%)',
       volCvNote:'CV normalizes for price level. Comparable across insurers with different price anchors. Fid and Sura are clear outliers.',
       volScatTitle:'Volatility vs mean price',
       presTitle:'Presence rate - % of snapshots insurer appeared',
@@ -493,7 +658,7 @@ const LANGS={
       type:'Type',deltaPct:'Δ%',detail:'Detail',firedAt:'Fired at',time:'Time',prevPrice:'Prev price',
       newPrice:'New price',dir:'Dir',price:'Price',rank:'Rank',cheapest:'Cheapest',gapClp:'Gap (CLP)',
       gapPct:'Gap %',avgPresence:'Avg presence %',minPresence:'Min presence %',meanPrice:'Mean price',
-      avgSigma:'Avg σ (CLP)',avgCv:'Avg CV %'
+      avgSigma:'Avg {sigma} (CLP)',avgCv:'Avg CV %'
     },
     misc:{yes:'yes',no:'no',up:'up',down:'down'},
     severity:{critical:'critical',warning:'warning',info:'info'},
@@ -527,9 +692,9 @@ const LANGS={
       timingHourNote:'Celda = número de cambios de precio en esa hora durante agosto. En hora de Santiago, el repricing ahora se concentra principalmente entre 00:00 y 06:00, con el pico más fuerte a las 00:00. Fid y Sura siguen siendo las más distribuidas durante la ventana nocturna; la mayoría del resto se concentra cerca de medianoche con algunos movimientos menores después.',
       timingDowTitle:'Cambios de precio por aseguradora x día de la semana',
       timingDowNote:'Muestra si alguna aseguradora tiene un ciclo semanal de precios. Una distribución relativamente pareja sugiere reglas diarias, no semanales.',
-      volStdTitle:'Desviación estándar diaria promedio σ (CLP)',
-      volStdNote:'Una sigma alta indica que los precios varían mucho día a día. Señal de repricing dinámico o algorítmico.',
-      volCvTitle:'Coeficiente de variación — σ/μ (%)',
+      volStdTitle:'Desviación {sigma} diaria promedio (CLP)',
+      volStdNote:'Una {sigma} alta indica que los precios varían mucho día a día. Señal de repricing dinámico o algorítmico.',
+      volCvTitle:'Coeficiente de variación — {sigma}/μ (%)',
       volCvNote:'El CV normaliza por nivel de precio. Permite comparar aseguradoras con anclas de precio distintas. Fid y Sura son outliers claros.',
       volScatTitle:'Volatilidad vs precio medio',
       presTitle:'Tasa de presencia - % de snapshots en que apareció la aseguradora',
@@ -557,7 +722,7 @@ const LANGS={
       type:'Tipo',deltaPct:'Δ%',detail:'Detalle',firedAt:'Disparada en',time:'Hora',prevPrice:'Precio previo',
       newPrice:'Precio nuevo',dir:'Dir.',price:'Precio',rank:'Ranking',cheapest:'Más barato',gapClp:'Brecha (CLP)',
       gapPct:'Brecha %',avgPresence:'Presencia prom. %',minPresence:'Presencia mín. %',meanPrice:'Precio medio',
-      avgSigma:'Sigma prom. (CLP)',avgCv:'CV prom. %'
+      avgSigma:'{sigma} prom. (CLP)',avgCv:'CV prom. %'
     },
     misc:{yes:'sí',no:'no',up:'sube',down:'baja'},
     severity:{critical:'crítica',warning:'advertencia',info:'info'},
@@ -579,6 +744,12 @@ const charts={};
 function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id]}}
 function t(path){
   return path.split('.').reduce((acc,key)=>acc&&acc[key],LANGS[currentLang]) ?? path;
+}
+function sigmaHtml(){
+  return '<span class="sigma-glyph">σ</span>';
+}
+function renderTokenText(text){
+  return String(text).replaceAll('{sigma}',sigmaHtml());
 }
 function escapeHtml(s){
   return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
@@ -660,7 +831,7 @@ function formatAlertMarkup(r){
 }
 function applyStaticTranslations(){
   document.documentElement.lang=t('htmlLang');
-  document.title=currentLang==='es'?'PriceRadar - Seguro automotriz chileno':'PriceRadar - Chilean Auto Insurance';
+  document.title=currentLang==='es'?'Price Radar - Seguro automotriz chileno':'Price Radar - Chilean Auto Insurance';
   const map={
     'nav-overview':'nav.overview','nav-competitive':'nav.competitive','nav-timeseries':'nav.timeseries',
     'nav-timing':'nav.timing','nav-volatility':'nav.volatility','nav-tables':'nav.tables',
@@ -687,6 +858,15 @@ function applyStaticTranslations(){
   const mf6hOpt=document.getElementById('mf6h-opt-all');
   if(mf6hOpt) mf6hOpt.textContent=t('mf6h.allPortals');
   Object.entries(map).forEach(([id,key])=>{const el=document.getElementById(id);if(el) el.textContent=t(key);});
+  ['vol-std-title','vol-std-note','vol-cv-title'].forEach(id=>{
+    const keyMap={
+      'vol-std-title':'static.volStdTitle',
+      'vol-std-note':'static.volStdNote',
+      'vol-cv-title':'static.volCvTitle'
+    };
+    const el=document.getElementById(id);
+    if(el) el.innerHTML=renderTokenText(t(keyMap[id]));
+  });
   const navAlerts=document.getElementById('nav-alerts');
   if(navAlerts){
     const badge=document.getElementById('abadge');
@@ -976,7 +1156,7 @@ const endLabelPlugin={
     }
     ctx.save();
     pts.forEach(p=>{
-      ctx.font='600 9px system-ui,-apple-system,sans-serif';
+      ctx.font='600 10px Roboto, Arial, sans-serif';
       ctx.fillStyle=p.color;
       ctx.textAlign='left';
       ctx.textBaseline='middle';
@@ -1000,7 +1180,7 @@ const bubbleLabelPlugin={
         // derive solid color from the semi-transparent backgroundColor
         const solid=ds.backgroundColor.replace(/,[\d.]+\)$/,',1)');
         ctx.save();
-        ctx.font='bold 9px system-ui,-apple-system,sans-serif';
+        ctx.font='700 10px Roboto, Arial, sans-serif';
         ctx.fillStyle=solid;
         ctx.textAlign='center';
         ctx.textBaseline='bottom';
@@ -1214,7 +1394,7 @@ function renderTable(){
       data.map(r=>{const w=r.avg_presence<80;return row(r.portal,r.insurer,`<span style="${w?'color:var(--amber);font-weight:700':''}">${r.avg_presence.toFixed(1)}%</span>`,r.min_presence.toFixed(1)+'%')}).join('')+'</tbody></table>';
   }else if(sel==='vol'){
     data=VOL.filter(r=>portal==='all'||r.portal===portal).sort((a,b)=>b.avg_cv-a.avg_cv);
-    html='<table class="dt">'+hdr(t('table.portal'),t('table.insurer'),t('table.meanPrice'),t('table.avgSigma'),t('table.avgCv'))+'<tbody>'+
+    html='<table class="dt">'+hdr(t('table.portal'),t('table.insurer'),t('table.meanPrice'),renderTokenText(t('table.avgSigma')),t('table.avgCv'))+'<tbody>'+
       data.map(r=>row(r.portal,r.insurer,fmtCLP(r.mean_price),fmtCLP(r.avg_std),r.avg_cv.toFixed(2)+'%')).join('')+'</tbody></table>';
   }
   document.getElementById('tbl-count').textContent=data.length+' '+t('alerts.rows');
