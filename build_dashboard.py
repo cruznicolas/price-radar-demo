@@ -151,13 +151,20 @@ def build_MF() -> str:
 
 def build_AE() -> str:
     rows = read_csv("alert_events.csv")
-    data = [
-        cast(r, ints={"alert_id", "run_id"}, floats={"value", "threshold"},
-             bools={"acknowledged"},
-             keep_str={"alert_type", "severity", "portal", "insurer",
-                       "fired_at", "detail"})
-        for r in rows
-    ]
+    cache_dir = OUT / "llm_cache"
+    data = []
+    for r in rows:
+        row = cast(r, ints={"alert_id", "run_id"}, floats={"value", "threshold"},
+                   bools={"acknowledged"},
+                   keep_str={"alert_type", "severity", "portal", "insurer",
+                             "fired_at", "detail"})
+        alert_id = row.get("alert_id")
+        ctx_path = cache_dir / f"alert_{alert_id}.txt"
+        row["_llm_context"] = (
+            ctx_path.read_text(encoding="utf-8").strip()
+            if ctx_path.exists() else ""
+        )
+        data.append(row)
     data.sort(key=lambda r: r["fired_at"], reverse=True)
     return js_const("AE", data)
 
@@ -408,6 +415,24 @@ def _md_to_html(text: str) -> str:
     return ''.join(f'<p>{p.strip()}</p>' for p in paras if p.strip())
 
 
+def _read_briefing_file(path: Path) -> dict:
+    """Read one cached briefing markdown file into a dashboard-friendly dict."""
+    content = path.read_text(encoding="utf-8").strip()
+    lines = content.splitlines()
+
+    briefing_date = None
+    body_lines = lines
+    if lines and re.match(r'^#\s*\d{4}-\d{2}-\d{2}', lines[0]):
+        m = re.search(r'\d{4}-\d{2}-\d{2}', lines[0])
+        if m:
+            briefing_date = m.group()
+        body_lines = lines[1:]
+
+    body = "\n".join(body_lines).strip()
+    html_body = _md_to_html(body) if body else ""
+    return {"date": briefing_date, "html": html_body}
+
+
 def build_BRIEFING() -> str:
     """Read cached briefing markdown and pre-render to HTML.
 
@@ -419,22 +444,15 @@ def build_BRIEFING() -> str:
     if not latest.exists():
         return js_const("BRIEFING", {"date": None, "html": ""})
 
-    content = latest.read_text(encoding="utf-8").strip()
-    lines = content.splitlines()
+    return js_const("BRIEFING", _read_briefing_file(latest))
 
-    # First line may be "# YYYY-MM-DD"
-    briefing_date = None
-    body_lines = lines
-    if lines and re.match(r'^#\s*\d{4}-\d{2}-\d{2}', lines[0]):
-        m = re.search(r'\d{4}-\d{2}-\d{2}', lines[0])
-        if m:
-            briefing_date = m.group()
-        body_lines = lines[1:]
 
-    body = "\n".join(body_lines).strip()
-    html_body = _md_to_html(body) if body else ""
-
-    return js_const("BRIEFING", {"date": briefing_date, "html": html_body})
+def build_BRIEFINGS() -> str:
+    """Read all dated cached briefings and embed them newest-first."""
+    cache_dir = Path("output/llm_cache")
+    files = sorted(cache_dir.glob("briefing_????-??-??.md"), reverse=True)
+    data = [_read_briefing_file(path) for path in files]
+    return js_const("BRIEFINGS", data)
 
 
 def build_PRES() -> str:
@@ -494,6 +512,7 @@ def main():
         ("MF6H",        build_MF6H),
         ("PROFILE",     build_PROFILE),
         ("BRIEFING",    build_BRIEFING),
+        ("BRIEFINGS",   build_BRIEFINGS),
     ]
 
     lines = []
